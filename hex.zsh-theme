@@ -195,7 +195,7 @@ prompt_status() {
 
   [[ $RETVAL -ne 0 ]] && symbols+="%{%F{9}%}" 
   [[ $UID -eq 0 ]] && symbols+="%{%F{3}%}󱐋" 
-  [[ $(jobs -l | wc -l) -gt 0 ]] && symbols+="%{%F{6}%}"
+  symbols+="%{%F{6}%}%1(j..)"
   [[ -n "$symbols" ]] && prompt_segment 0 "$symbols"
 }
 
