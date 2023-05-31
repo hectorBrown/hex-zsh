@@ -242,9 +242,7 @@ TRAPINT() {
 }
 
 prompt_vi() {
-	if bindkey | grep -q '"\^\[" vi-cmd-mode'; then
-		prompt_segment $VI_MODE_COLOUR "%{\033[1m%}"$VI_MODE_PROMPT_SEG
-	fi
+  prompt_segment $VI_MODE_COLOUR "%{\033[1m%}"$VI_MODE_PROMPT_SEG
 }
 ## Main prompt
 top_prompt() {
