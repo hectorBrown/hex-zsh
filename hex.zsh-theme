@@ -1,12 +1,11 @@
 # vim:ft=zsh ts=2 sw=2 sts=2
-CURRENT_BG='NONE'
-CURRENT_FG='0'
+#
 # Begin a segment
 # Takes two arguments, background and foreground. Both can be omitted,
 # rendering default background/foreground.
 
 prompt_segment() {
-  local bg fg
+  local fg
   [[ -n $1 ]] && fg="%F{$1}" || fg="%f"
 	echo -n "%{$fg%}"
   [[ -n $2 ]] && echo -n "$2 "
@@ -14,19 +13,23 @@ prompt_segment() {
 
 # End the prompt, closing any open segments
 prompt_end() {
-  if [[ -n $CURRENT_BG ]]; then
-    echo -n " %{%k%F{$CURRENT_BG}%}$SEGMENT_SEPARATOR"
-  else
-    echo -n "%{%k%}"
-  fi
   echo -n "%{%f%}"
-  CURRENT_BG=''
 }
 
 ### Prompt components
 # Each component will draw itself, and hide itself if no information needs to be shown
 
 # Context: user@hostname (who am I and where am I)
+prompt_context() {
+  # if [[ "$USER" != "$DEFAULT_USER" || -n "$SSH_CLIENT" ]]; then
+    # prompt_segment 237 7 "%(!.%{%F{3}%}.)%n@%m"
+  # fi
+  case "$OSTYPE" in
+    darwin*)  OS_LOGO="\ue29e" ;; 
+    linux*)   OS_LOGO="\ue712" ;;
+  esac
+  prompt_segment 7 $OS_LOGO
+}
 
 # Git: branch/detached head, dirty status
 function +vi-git-st() {
@@ -195,5 +198,5 @@ build_prompt() {
 }
 
 PROMPT='╭─$(build_prompt)
-╰─$(prompt_vi)'
+╰─$(prompt_vi;prompt_end)'
 
