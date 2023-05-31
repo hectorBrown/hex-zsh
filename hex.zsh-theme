@@ -193,9 +193,9 @@ prompt_virtualenv() {
 prompt_status() {
   local -a symbols
 
+  symbols+="%{%F{6}%}%1(j. .)"
   [[ $RETVAL -ne 0 ]] && symbols+="%{%F{9}%}" 
   [[ $UID -eq 0 ]] && symbols+="%{%F{3}%}󱐋" 
-  symbols+="%{%F{6}%}%1(j..)"
   [[ -n "$symbols" ]] && prompt_segment 0 "$symbols"
 }
 
@@ -249,7 +249,7 @@ prompt_vi() {
 ## Main prompt
 top_prompt() {
   RETVAL=$?
-	echo -n " "
+	echo -n ""
   prompt_status
   prompt_virtualenv
   #prompt_context
