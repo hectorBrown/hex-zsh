@@ -28,7 +28,7 @@ prompt_context() {
     darwin*)  OS_LOGO="\ue29e" ;; 
     linux*)   OS_LOGO="\ue712" ;;
   esac
-  prompt_segment 7 $OS_LOGO
+  prompt_segment 15 $OS_LOGO
 }
 
 # Git: branch/detached head, dirty status
@@ -114,6 +114,64 @@ prompt_git() {
   fi
 }
 
+prompt_bzr() {
+    (( $+commands[bzr] )) || return
+    if (bzr status >/dev/null 2>&1); then
+        status_mod=`bzr status | head -n1 | grep "modified" | wc -m`
+        status_all=`bzr status | head -n1 | wc -m`
+        revision=`bzr log | head -n2 | tail -n1 | sed 's/^revno: //'`
+        if [[ $status_mod -gt 0 ]] ; then
+            prompt_segment 3
+            echo -n "bzr@"$revision "✚ "
+        else
+            if [[ $status_all -gt 0 ]] ; then
+                prompt_segment 3
+                echo -n "bzr@"$revision
+
+            else
+                prompt_segment 2
+                echo -n "bzr@"$revision
+            fi
+        fi
+    fi
+}
+
+prompt_hg() {
+  (( $+commands[hg] )) || return
+  local rev st branch
+  if $(hg id >/dev/null 2>&1); then
+    if $(hg prompt >/dev/null 2>&1); then
+      if [[ $(hg prompt "{status|unknown}") = "?" ]]; then
+        # if files are not added
+        prompt_segment 1
+        st='±'
+      elif [[ -n $(hg prompt "{status|modified}") ]]; then
+        # if any modification
+        prompt_segment 3
+        st='±'
+      else
+        # if working copy is clean
+        prompt_segment 2
+      fi
+      echo -n $(hg prompt "☿ {rev}@{branch}") $st
+    else
+      st=""
+      rev=$(hg id -n 2>/dev/null | sed 's/[^-0-9]//g')
+      branch=$(hg id -b 2>/dev/null)
+      if `hg st | grep -q "^\?"`; then
+        prompt_segment 1
+        st='±'
+      elif `hg st | grep -q "^[MA]"`; then
+        prompt_segment 3
+        st='±'
+      else
+        prompt_segment 2
+      fi
+      echo -n "☿ $rev@$branch" $st
+    fi
+  fi
+}
+
 # Dir: current working directory
 prompt_dir() {
   prompt_segment 4 '%~'
@@ -138,18 +196,22 @@ prompt_status() {
   [[ $RETVAL -ne 0 ]] && symbols+="%{%F{9}%}" 
   [[ $UID -eq 0 ]] && symbols+="%{%F{3}%}󱐋" 
   [[ $(jobs -l | wc -l) -gt 0 ]] && symbols+="%{%F{6}%}"
-  [[ -n "$symbols" ]] && prompt_segment 7 "$symbols"
+  [[ -n "$symbols" ]] && prompt_segment 0 "$symbols"
 }
 
-VI_MODE_PROMPT_SEG=" "
-VI_MODE_COLOUR=12
+VI_INSERT_SEG=" "
+VI_NORMAL_SEG=" "
+VI_INSERT_COLOUR=12
+VI_NORMAL_COLOUR=15
+VI_MODE_PROMPT_SEG=$VI_INSERT_SEG
+VI_MODE_COLOUR=$VI_INSERT_COLOUR
 zle-keymap-select() {
 	if [ "${KEYMAP}" = 'vicmd' ]; then
-		VI_MODE_PROMPT_SEG=" "
-		VI_MODE_COLOUR=15
+		VI_MODE_PROMPT_SEG=$VI_NORMAL_SEG
+		VI_MODE_COLOUR=$VI_NORMAL_COLOUR
 	else
-		VI_MODE_PROMPT_SEG=" "
-		VI_MODE_COLOUR=12
+		VI_MODE_PROMPT_SEG=$VI_INSERT_SEG
+		VI_MODE_COLOUR=$VI_INSERT_COLOUR
 	fi
 	zle reset-prompt
 
@@ -168,25 +230,24 @@ zle-keymap-select() {
 zle -N zle-keymap-select
 
 zle-line-finish() {
-	VI_MODE_PROMPT_SEG=" "
-	VI_MODE_COLOUR=12
+	VI_MODE_PROMPT_SEG=$VI_INSERT_SEG
+	VI_MODE_COLOUR=$VI_INSERT_COLOUR
 }
 zle -N zle-line-finish
 
 TRAPINT() {
-	VI_MODE_PROMPT_SEG=" "
-	VI_MODE_COLOUR=12
+	VI_MODE_PROMPT_SEG=$VI_INSERT_SEG
+	VI_MODE_COLOUR=$VI_INSERT_COLOUR
 	return $(( 128 + $1 ))
 }
 
 prompt_vi() {
-	if bindkey | grep '"\^\[" vi-cmd-mode' &> /dev/null ; then
-		#prompt_seperator 0 0
+	if bindkey | grep -q '"\^\[" vi-cmd-mode'; then
 		prompt_segment $VI_MODE_COLOUR "%{\033[1m%}"$VI_MODE_PROMPT_SEG
 	fi
 }
 ## Main prompt
-build_prompt() {
+top_prompt() {
   RETVAL=$?
 	echo -n " "
   prompt_status
@@ -194,9 +255,10 @@ build_prompt() {
   #prompt_context
   prompt_dir
   prompt_git
-  prompt_end
+  prompt_bzr
+  prompt_hg
 }
 
-PROMPT='╭─$(build_prompt)
+PROMPT='╭─$(top_prompt;prompt_end)
 ╰─$(prompt_vi;prompt_end)'
 
