@@ -8,7 +8,7 @@ prompt_segment() {
   local fg
   [[ -n $1 ]] && fg="%F{$1}" || fg="%f"
 	echo -n "%{$fg%}"
-  [[ -n $2 ]] && echo -n "$2 "
+  [[ -n $2 ]] && echo -n "%b$2%B "
 }
 
 # End the prompt, closing any open segments
