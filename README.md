@@ -10,7 +10,7 @@ This is a zsh theme heavily based on [bira](https://github.com/ohmyzsh/ohmyzsh/w
 2. Download and install a [Nerd Font](https://nerdfonts.com/).
 3. Download `hex.zsh-theme` and put it in `~/.oh-my-zsh/custom/themes/`.
   ``` bash
-  curl -L https://raw.githubusercontent.com/hectorBrown/hex-zsh/master/hex.zsh-theme > ~/.oh-my-zsh/custom/themes/gruvbox.zsh-theme
+  curl -L https://raw.githubusercontent.com/hectorBrown/hex-zsh/master/hex.zsh-theme > ~/.oh-my-zsh/custom/themes/hex.zsh-theme
   ```
 4. Enable the theme, add the following to your `~/.zshrc` or `~/.oh-my-zsh/custom/custom.zsh` file
   ```
