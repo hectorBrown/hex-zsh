@@ -188,7 +188,7 @@ prompt_virtualenv() {
 
 # Status:
 # - was there an error
-# - am I roo
+# - am I root
 # - are there background jobs?
 prompt_status() {
   local -a symbols
