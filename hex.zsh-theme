@@ -5,15 +5,15 @@
 # rendering default background/foreground.
 
 prompt_segment() {
-  local fg
-  [[ -n $1 ]] && fg="%F{$1}" || fg="%f"
-	echo -n "%{$fg%}"
-  [[ -n $2 ]] && echo -n "%b$2%B "
+    local fg
+    [[ -n $1 ]] && fg="%F{$1}" || fg="%f"
+    echo -n "%{$fg%}"
+    [[ -n $2 ]] && echo -n "%b$2%B "
 }
 
 # End the prompt, closing any open segments
 prompt_end() {
-  echo -n "%{%f%}"
+    echo -n "%{%f%}"
 }
 
 ### Prompt components
@@ -21,14 +21,14 @@ prompt_end() {
 
 # Context: user@hostname (who am I and where am I)
 prompt_context() {
-  # if [[ "$USER" != "$DEFAULT_USER" || -n "$SSH_CLIENT" ]]; then
+    # if [[ "$USER" != "$DEFAULT_USER" || -n "$SSH_CLIENT" ]]; then
     # prompt_segment 237 7 "%(!.%{%F{3}%}.)%n@%m"
-  # fi
-  case "$OSTYPE" in
-    darwin*)  OS_LOGO="\ue29e" ;; 
-    linux*)   OS_LOGO="\ue712" ;;
-  esac
-  prompt_segment 15 $OS_LOGO
+    # fi
+    case "$OSTYPE" in
+        darwin*)  OS_LOGO="\ue29e" ;;
+        linux*)   OS_LOGO="\ue712" ;;
+    esac
+    prompt_segment 15 $OS_LOGO
 }
 
 # Git: branch/detached head, dirty status
@@ -42,12 +42,12 @@ function +vi-git-st() {
     local -a ahead_and_behind=(
         $(git rev-list --left-right --count HEAD...${hook_com[branch]}@{upstream} 2>/dev/null)
     )
-		local -a stat=("$(git status --porcelain)")
+    local -a stat=("$(git status --porcelain)")
     local -a untracked=(
-    	$(echo "$stat" | grep '^??' | wc -l)
+        $(echo "$stat" | grep '^??' | wc -l)
     )
     local -a modified=(
-		$(echo "$stat" | grep '^.M' | wc -l)
+        $(echo "$stat" | grep '^.M' | wc -l)
     )
     local -a staged=(
         $(echo "$stat" | grep '^[AM]' | wc -l)
@@ -63,55 +63,55 @@ function +vi-git-st() {
     (( $behind )) && gitstatus+=( '' )
 
     if [[ gitstatus != '' ]] then
-	    hook_com[misc]+=''
+        hook_com[misc]+=''
     fi
     hook_com[misc]+=${(j:  :)gitstatus}
 }
 
 prompt_git() {
-  (( $+commands[git] )) || return
-  if [[ "$(git config --get oh-my-zsh.hide-status 2>/dev/null)" = 1 ]]; then
-    return
-  fi
-  local PL_BRANCH_CHAR
-  () {
-    local LC_ALL="" LC_CTYPE="en_US.UTF-8"
-    PL_BRANCH_CHAR=$'\ue0a0'         # 
-  }
-  local ref dirty mode repo_path
-
-  if $(git rev-parse --is-inside-work-tree >/dev/null 2>&1); then
-    repo_path=$(git rev-parse --git-dir 2>/dev/null)
-    dirty=$(parse_git_dirty)
-    ref=$(git symbolic-ref HEAD 2> /dev/null) || ref="➦ $(git rev-parse --short HEAD 2> /dev/null)"
-    if [[ -n $dirty ]]; then
-      prompt_segment 3
-    else
-      prompt_segment 2
+    (( $+commands[git] )) || return
+    if [[ "$(git config --get oh-my-zsh.hide-status 2>/dev/null)" = 1 ]]; then
+        return
     fi
+    local PL_BRANCH_CHAR
+    () {
+        local LC_ALL="" LC_CTYPE="en_US.UTF-8"
+        PL_BRANCH_CHAR=$'\ue0a0'         # 
+    }
+    local ref dirty mode repo_path
 
-    if [[ -e "${repo_path}/BISECT_LOG" ]]; then
-      mode=" <B>"
-    elif [[ -e "${repo_path}/MERGE_HEAD" ]]; then
-      mode=" >M<"
-    elif [[ -e "${repo_path}/rebase" || -e "${repo_path}/rebase-apply" || -e "${repo_path}/rebase-merge" || -e "${repo_path}/../.dotest" ]]; then
-      mode=" >R>"
+    if $(git rev-parse --is-inside-work-tree >/dev/null 2>&1); then
+        repo_path=$(git rev-parse --git-dir 2>/dev/null)
+        dirty=$(parse_git_dirty)
+        ref=$(git symbolic-ref HEAD 2> /dev/null) || ref="➦ $(git rev-parse --short HEAD 2> /dev/null)"
+        if [[ -n $dirty ]]; then
+            prompt_segment 3
+        else
+            prompt_segment 2
+        fi
+
+        if [[ -e "${repo_path}/BISECT_LOG" ]]; then
+            mode=" <B>"
+        elif [[ -e "${repo_path}/MERGE_HEAD" ]]; then
+            mode=" >M<"
+        elif [[ -e "${repo_path}/rebase" || -e "${repo_path}/rebase-apply" || -e "${repo_path}/rebase-merge" || -e "${repo_path}/../.dotest" ]]; then
+            mode=" >R>"
+        fi
+
+        setopt promptsubst
+        autoload -Uz vcs_info
+
+        zstyle ':vcs_info:*' enable git
+        zstyle ':vcs_info:*' get-revision true
+        zstyle ':vcs_info:*' check-for-changes true
+        #zstyle ':vcs_info:*' stagedstr ''
+        #zstyle ':vcs_info:*' unstagedstr '●'
+        zstyle ':vcs_info:*' formats ' %m'
+        zstyle ':vcs_info:*' actionformats ' %m'
+        zstyle ':vcs_info:git*+set-message:*' hooks git-st
+        vcs_info
+        echo -n "[ ${ref/refs\/heads\//$PL_BRANCH_CHAR }${vcs_info_msg_0_%% }${mode} ]"
     fi
-
-    setopt promptsubst
-    autoload -Uz vcs_info
-
-    zstyle ':vcs_info:*' enable git
-    zstyle ':vcs_info:*' get-revision true
-    zstyle ':vcs_info:*' check-for-changes true
-    #zstyle ':vcs_info:*' stagedstr ''
-    #zstyle ':vcs_info:*' unstagedstr '●'
-    zstyle ':vcs_info:*' formats ' %m'
-    zstyle ':vcs_info:*' actionformats ' %m'
-    zstyle ':vcs_info:git*+set-message:*' hooks git-st
-    vcs_info
-    echo -n "[ ${ref/refs\/heads\//$PL_BRANCH_CHAR }${vcs_info_msg_0_%% }${mode} ]"
-  fi
 }
 
 prompt_bzr() {
@@ -137,52 +137,52 @@ prompt_bzr() {
 }
 
 prompt_hg() {
-  (( $+commands[hg] )) || return
-  local rev st branch
-  if $(hg id >/dev/null 2>&1); then
-    if $(hg prompt >/dev/null 2>&1); then
-      if [[ $(hg prompt "{status|unknown}") = "?" ]]; then
-        # if files are not added
-        prompt_segment 1
-        st='±'
-      elif [[ -n $(hg prompt "{status|modified}") ]]; then
-        # if any modification
-        prompt_segment 3
-        st='±'
-      else
-        # if working copy is clean
-        prompt_segment 2
-      fi
-      echo -n $(hg prompt "☿ {rev}@{branch}") $st
-    else
-      st=""
-      rev=$(hg id -n 2>/dev/null | sed 's/[^-0-9]//g')
-      branch=$(hg id -b 2>/dev/null)
-      if `hg st | grep -q "^\?"`; then
-        prompt_segment 1
-        st='±'
-      elif `hg st | grep -q "^[MA]"`; then
-        prompt_segment 3
-        st='±'
-      else
-        prompt_segment 2
-      fi
-      echo -n "☿ $rev@$branch" $st
+    (( $+commands[hg] )) || return
+    local rev st branch
+    if $(hg id >/dev/null 2>&1); then
+        if $(hg prompt >/dev/null 2>&1); then
+            if [[ $(hg prompt "{status|unknown}") = "?" ]]; then
+                # if files are not added
+                prompt_segment 1
+                st='±'
+            elif [[ -n $(hg prompt "{status|modified}") ]]; then
+                # if any modification
+                prompt_segment 3
+                st='±'
+            else
+                # if working copy is clean
+                prompt_segment 2
+            fi
+            echo -n $(hg prompt "☿ {rev}@{branch}") $st
+        else
+            st=""
+            rev=$(hg id -n 2>/dev/null | sed 's/[^-0-9]//g')
+            branch=$(hg id -b 2>/dev/null)
+            if `hg st | grep -q "^\?"`; then
+                prompt_segment 1
+                st='±'
+            elif `hg st | grep -q "^[MA]"`; then
+                prompt_segment 3
+                st='±'
+            else
+                prompt_segment 2
+            fi
+            echo -n "☿ $rev@$branch" $st
+        fi
     fi
-  fi
 }
 
 # Dir: current working directory
 prompt_dir() {
-  prompt_segment 4 '%~'
+    prompt_segment 4 '%~'
 }
 
 # Virtualenv: current working virtualenv
 prompt_virtualenv() {
-  local virtualenv_path="$VIRTUAL_ENV"
-  if [[ -n $virtualenv_path && -n $VIRTUAL_ENV_DISABLE_PROMPT ]]; then
-		prompt_segment 5 "(`basename $virtualenv_path`)"
-  fi
+    local virtualenv_path="$VIRTUAL_ENV"
+    if [[ -n $virtualenv_path && -n $VIRTUAL_ENV_DISABLE_PROMPT ]]; then
+        prompt_segment 5 "(`basename $virtualenv_path`)"
+    fi
 }
 
 
@@ -191,12 +191,12 @@ prompt_virtualenv() {
 # - am I root
 # - are there background jobs?
 prompt_status() {
-  local -a symbols
+    local -a symbols
 
-  symbols+="%{%F{6}%}%1(j. .)"
-  [[ $RETVAL -ne 0 ]] && symbols+="%{%F{9}%}" 
-  [[ $UID -eq 0 ]] && symbols+="%{%F{3}%}󱐋" 
-  [[ -n "$symbols" ]] && prompt_segment 0 "$symbols"
+    symbols+="%{%F{6}%}%1(j. .)"
+    [[ $RETVAL -ne 0 ]] && symbols+="%{%F{9}%}"
+    [[ $UID -eq 0 ]] && symbols+="%{%F{3}%}󱐋"
+    [[ -n "$symbols" ]] && prompt_segment 0 "$symbols"
 }
 
 VI_INSERT_SEG=" "
@@ -206,55 +206,55 @@ VI_NORMAL_COLOUR=15
 VI_MODE_PROMPT_SEG=$VI_INSERT_SEG
 VI_MODE_COLOUR=$VI_INSERT_COLOUR
 zle-keymap-select() {
-	if [ "${KEYMAP}" = 'vicmd' ]; then
-		VI_MODE_PROMPT_SEG=$VI_NORMAL_SEG
-		VI_MODE_COLOUR=$VI_NORMAL_COLOUR
-	else
-		VI_MODE_PROMPT_SEG=$VI_INSERT_SEG
-		VI_MODE_COLOUR=$VI_INSERT_COLOUR
-	fi
-	zle reset-prompt
+    if [ "${KEYMAP}" = 'vicmd' ]; then
+        VI_MODE_PROMPT_SEG=$VI_NORMAL_SEG
+        VI_MODE_COLOUR=$VI_NORMAL_COLOUR
+    else
+        VI_MODE_PROMPT_SEG=$VI_INSERT_SEG
+        VI_MODE_COLOUR=$VI_INSERT_COLOUR
+    fi
+    zle reset-prompt
 
-	if [[ ${KEYMAP} == vicmd ]] ||
-     [[ $1 = 'block' ]]; then
-    echo -ne '\e[1 q'
+    if [[ ${KEYMAP} == vicmd ]] ||
+    [[ $1 = 'block' ]]; then
+        echo -ne '\e[1 q'
 
-  elif [[ ${KEYMAP} == main ]] ||
-       [[ ${KEYMAP} == viins ]] ||
-       [[ ${KEYMAP} = '' ]] ||
-       [[ $1 = 'beam' ]]; then
-    echo -ne '\e[5 q'
-  fi
+    elif [[ ${KEYMAP} == main ]] ||
+    [[ ${KEYMAP} == viins ]] ||
+    [[ ${KEYMAP} = '' ]] ||
+    [[ $1 = 'beam' ]]; then
+        echo -ne '\e[5 q'
+    fi
 
 }
 zle -N zle-keymap-select
 
 zle-line-finish() {
-	VI_MODE_PROMPT_SEG=$VI_INSERT_SEG
-	VI_MODE_COLOUR=$VI_INSERT_COLOUR
+    VI_MODE_PROMPT_SEG=$VI_INSERT_SEG
+    VI_MODE_COLOUR=$VI_INSERT_COLOUR
 }
 zle -N zle-line-finish
 
 TRAPINT() {
-	VI_MODE_PROMPT_SEG=$VI_INSERT_SEG
-	VI_MODE_COLOUR=$VI_INSERT_COLOUR
-	return $(( 128 + $1 ))
+    VI_MODE_PROMPT_SEG=$VI_INSERT_SEG
+    VI_MODE_COLOUR=$VI_INSERT_COLOUR
+    return $(( 128 + $1 ))
 }
 
 prompt_vi() {
-  prompt_segment $VI_MODE_COLOUR "%{\033[1m%}"$VI_MODE_PROMPT_SEG
+    prompt_segment $VI_MODE_COLOUR "%{\033[1m%}"$VI_MODE_PROMPT_SEG
 }
 ## Main prompt
 top_prompt() {
-  RETVAL=$?
-	echo -n ""
-  prompt_status
-  prompt_virtualenv
-  #prompt_context
-  prompt_dir
-  prompt_git
-  prompt_bzr
-  prompt_hg
+    RETVAL=$?
+    echo -n ""
+    prompt_status
+    prompt_virtualenv
+    #prompt_context
+    prompt_dir
+    prompt_git
+    prompt_bzr
+    prompt_hg
 }
 
 PROMPT='╭─$(top_prompt;prompt_end)
